@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, avoid_print, library_prefixes
+// ignore_for_file: prefer_const_constructors, avoid_print, library_prefixes, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -44,6 +44,8 @@ class _MyHomePageState extends State<MyHomePage> {
   int? _remoteUid;
   bool _localUserJoined = false;
   late RtcEngine _engine;
+  bool isMicOff = false;
+  bool isVideoOff = false;
 
   @override
   void initState() {
@@ -98,10 +100,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Video Call'),
-      ),
       body: Stack(
         children: [
           Center(
@@ -109,16 +107,78 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Align(
             alignment: Alignment.topLeft,
-            child: SizedBox(
-              width: 100,
-              height: 150,
-              child: Center(
-                child: _localUserJoined
-                    ? RtcLocalView.SurfaceView()
-                    : CircularProgressIndicator(),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 50, left: 20),
+              child: SizedBox(
+                width: 100,
+                height: 150,
+                child: Center(
+                  child: _localUserJoined
+                      ? RtcLocalView.SurfaceView()
+                      : CircularProgressIndicator(),
+                ),
               ),
             ),
           ),
+          if (_remoteUid != null)
+            Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          await _engine.leaveChannel();
+                        },
+                        child: CircleAvatar(
+                            backgroundColor: Colors.red,
+                            radius: 30,
+                            child: Icon(Icons.call_end, color: Colors.white)),
+                      ),
+                      SizedBox(
+                        height: 30,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          InkWell(
+                              onTap: () async {
+                                await _engine.switchCamera();
+                              },
+                              child: Icon(Icons.switch_camera,
+                                  color: Colors.white)),
+                          InkWell(
+                            onTap: () async {
+                              await _engine.muteLocalVideoStream(true);
+                              setState(() async {
+                                isVideoOff = !isVideoOff;
+                              });
+                            },
+                            child: Icon(
+                              !isVideoOff ? Icons.videocam : Icons.videocam_off,
+                              color: Colors.white,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              await _engine.muteLocalAudioStream(true);
+                              setState(() {
+                                isMicOff = !isMicOff;
+                              });
+                            },
+                            child: Icon(
+                              !isMicOff ? Icons.mic : Icons.mic_off,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ))
         ],
       ),
     );
